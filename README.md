@@ -21,7 +21,7 @@ The **Curriculum Creation Engine** provides:
 
 ## 🚀 Live Demo & Video Walkthrough
 
-- **Live URL:** [Deploying to Vercel...]
+- **Live URL:** [https://lingocare-umber.vercel.app/](https://lingocare-umber.vercel.app/)
 - **Video Walkthrough (5 mins):** [Link to Walkthrough Video]
 
 ---
