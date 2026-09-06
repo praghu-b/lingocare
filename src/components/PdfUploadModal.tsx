@@ -9,8 +9,9 @@ import {
   AlertCircle,
   CheckCircle2,
   Loader2,
-  Layers,
-  ArrowRight,
+  Download,
+  TestTube2,
+  Info,
 } from "lucide-react";
 import { Curriculum } from "@/types/curriculum";
 import { getCustomApiKey } from "./SettingsModal";
@@ -78,6 +79,19 @@ export function PdfUploadModal({
     }
   };
 
+  const handleLoadSamplePdf = async (filename: string) => {
+    try {
+      const res = await fetch(`/${filename}`);
+      if (!res.ok) throw new Error("Could not load sample PDF");
+      const blob = await res.blob();
+      const file = new File([blob], filename, { type: "application/pdf" });
+      setSelectedFile(file);
+      setErrorMessage(null);
+    } catch (e: any) {
+      setErrorMessage("Could not fetch test sample: " + e.message);
+    }
+  };
+
   const handleResetModal = () => {
     setSelectedFile(null);
     setStatus("idle");
@@ -103,7 +117,7 @@ export function PdfUploadModal({
       // Step simulation for clear UX feedback
       const stepTimer = setTimeout(() => {
         setStatus("structuring");
-      }, 2500);
+      }, 2000);
 
       const response = await fetch("/api/parse-curriculum", {
         method: "POST",
@@ -212,14 +226,14 @@ export function PdfUploadModal({
 
         {/* Upload Dropzone */}
         {status === "idle" && (
-          <div>
+          <div className="space-y-3">
             <div
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}
               onDragOver={handleDrag}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
-              className={`relative cursor-pointer rounded-2xl border-2 border-dashed p-8 text-center transition-all ${
+              className={`relative cursor-pointer rounded-2xl border-2 border-dashed p-6 text-center transition-all ${
                 dragActive
                   ? "border-[#EC8601] bg-[#EC8601]/5 scale-[1.01]"
                   : "border-neutral-300 dark:border-neutral-700 hover:border-[#EC8601]/60 hover:bg-neutral-50 dark:hover:bg-neutral-800/40"
@@ -235,8 +249,8 @@ export function PdfUploadModal({
 
               {selectedFile ? (
                 <div className="space-y-2">
-                  <div className="w-12 h-12 rounded-2xl bg-[#EC8601]/10 text-[#EC8601] flex items-center justify-center mx-auto">
-                    <FileText className="w-6 h-6" />
+                  <div className="w-10 h-10 rounded-xl bg-[#EC8601]/10 text-[#EC8601] flex items-center justify-center mx-auto">
+                    <FileText className="w-5 h-5" />
                   </div>
                   <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
                     {selectedFile.name}
@@ -245,20 +259,20 @@ export function PdfUploadModal({
                     {(selectedFile.size / 1024).toFixed(1)} KB · Ready to process
                   </p>
                   <p className="text-xs text-[#EC8601] hover:underline font-medium pt-1">
-                    Click to choose a different PDF
+                    Click or drop another file to change
                   </p>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  <div className="w-12 h-12 rounded-2xl bg-neutral-100 dark:bg-neutral-800 text-neutral-500 flex items-center justify-center mx-auto">
-                    <Upload className="w-6 h-6" />
+                <div className="space-y-2.5">
+                  <div className="w-10 h-10 rounded-xl bg-neutral-100 dark:bg-neutral-800 text-neutral-500 flex items-center justify-center mx-auto">
+                    <Upload className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">
+                    <p className="text-xs sm:text-sm font-semibold text-neutral-800 dark:text-neutral-200">
                       Drop your curriculum PDF here, or{" "}
                       <span className="text-[#EC8601]">browse</span>
                     </p>
-                    <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+                    <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">
                       Supports course outlines, module lists, and comprehensive nursing syllabi
                     </p>
                   </div>
@@ -266,9 +280,43 @@ export function PdfUploadModal({
               )}
             </div>
 
+            {/* Quick Test Sample PDFs Bar */}
+            <div className="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200/80 dark:border-neutral-800 space-y-2">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-neutral-700 dark:text-neutral-300">
+                <TestTube2 className="w-3.5 h-3.5 text-[#EC8601]" />
+                <span>Test with Pre-Made German Nursing PDFs:</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => handleLoadSamplePdf("sample-nursing-curriculum.pdf")}
+                  className="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 hover:border-[#EC8601] hover:text-[#EC8601] transition-all"
+                  title="Complete German nursing curriculum with all 4 levels"
+                >
+                  📄 Complete Syllabus
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleLoadSamplePdf("sample-incomplete-syllabus.pdf")}
+                  className="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 hover:border-[#EC8601] hover:text-[#EC8601] transition-all"
+                  title="Modules only — tests AI inference of missing topics and lessons"
+                >
+                  ✨ Incomplete (Tests AI Inference)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleLoadSamplePdf("sample-unrelated-document.pdf")}
+                  className="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 hover:border-[#EC8601] hover:text-[#EC8601] transition-all"
+                  title="Medical invoice receipt — tests edge case handling"
+                >
+                  🧾 Invoice (Tests Edge Case)
+                </button>
+              </div>
+            </div>
+
             {/* Error Message */}
             {errorMessage && (
-              <div className="mt-3 p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-xs text-red-700 dark:text-red-300 flex items-start gap-2">
+              <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-xs text-red-700 dark:text-red-300 flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-red-600" />
                 <span>{errorMessage}</span>
               </div>
