@@ -219,28 +219,47 @@ OUTPUT JSON FORMAT ONLY:
 }
 `;
 
-        const response = await ai.models.generateContent({
-          model: "gemini-2.0-flash",
-          contents: [
-            {
-              role: "user",
-              parts: [
-                {
-                  inlineData: {
-                    data: buffer.toString("base64"),
-                    mimeType: "application/pdf",
-                  },
-                },
-                { text: prompt },
-              ],
-            },
-          ],
-          config: {
-            responseMimeType: "application/json",
-          },
-        });
+        const candidateModels = [
+          process.env.GEMINI_MODEL,
+          "gemini-3.7-flash",
+          "gemini-2.0-flash",
+          "gemini-1.5-flash",
+        ].filter(Boolean) as string[];
 
-        const responseText = response.text || "";
+        let responseText = "";
+
+        for (const modelId of candidateModels) {
+          try {
+            const response = await ai.models.generateContent({
+              model: modelId,
+              contents: [
+                {
+                  role: "user",
+                  parts: [
+                    {
+                      inlineData: {
+                        data: buffer.toString("base64"),
+                        mimeType: "application/pdf",
+                      },
+                    },
+                    { text: prompt },
+                  ],
+                },
+              ],
+              config: {
+                responseMimeType: "application/json",
+              },
+            });
+
+            if (response.text) {
+              responseText = response.text;
+              break;
+            }
+          } catch (modelErr: unknown) {
+            const msg = modelErr instanceof Error ? modelErr.message : String(modelErr);
+            console.warn(`Model ${modelId} attempt note:`, msg.slice(0, 100));
+          }
+        }
         const parsedData = JSON.parse(responseText);
 
         if (parsedData && Array.isArray(parsedData.modules)) {
