@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
-import { PDFParse } from "pdf-parse";
+import { extractText } from "unpdf";
 import { Curriculum, Module, Topic, Lesson } from "@/types/curriculum";
 
 // Fallback inference dictionary for German nursing competencies
@@ -292,11 +292,10 @@ OUTPUT JSON FORMAT ONLY:
     // 2. Intelligent Local Structural Parser (Fallback & Offline Mode)
     let extractedText = "";
     try {
-      const parser = new PDFParse({ data: buffer });
-      const textResult = await parser.getText();
-      extractedText = textResult.text || "";
+      const { text } = await extractText(new Uint8Array(buffer));
+      extractedText = Array.isArray(text) ? text.join("\n") : (text || "");
     } catch (parseErr: any) {
-      console.warn("PDFParse error:", parseErr);
+      console.warn("unpdf extraction error:", parseErr);
     }
 
     if (!extractedText || extractedText.trim().length === 0) {
@@ -329,14 +328,14 @@ OUTPUT JSON FORMAT ONLY:
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
 
-      // Detect Title at the top
-      if (i < 3 && (line.toLowerCase().includes("curriculum") || line.toLowerCase().includes("ausbildung") || line.toLowerCase().includes("pflege"))) {
+      // Check if line starts a Module
+      const isModuleHeader = /^(module|modul|kapitel|block|teil)\s*([0-9ivx]+)?[:—\-]?/i.test(line);
+
+      // Detect Title at the top (only if not a module header!)
+      if (i < 3 && !isModuleHeader && (line.toLowerCase().includes("curriculum") || line.toLowerCase().includes("ausbildung") || line.toLowerCase().includes("lehrplan"))) {
         curriculumTitle = line.replace(/^curriculum:\s*/i, "");
         continue;
       }
-
-      // Check if line starts a Module
-      const isModuleHeader = /^(module|modul|kapitel|block|teil)\s*([0-9ivx]+)?[:—\-]?/i.test(line);
 
       if (isModuleHeader) {
         if (currentTopic && currentModule) {
