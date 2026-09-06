@@ -7,7 +7,7 @@ import { Trash2, Sparkles, BookOpen } from "lucide-react";
 
 interface LessonRowProps {
   lesson: Lesson;
-  index: number;
+  index?: number;
   moduleId: string;
   topicId: string;
   onUpdate: (updates: Partial<Pick<Lesson, "title" | "description">>) => void;
@@ -16,7 +16,6 @@ interface LessonRowProps {
 
 export function LessonRow({
   lesson,
-  index,
   onUpdate,
   onDelete,
 }: LessonRowProps) {

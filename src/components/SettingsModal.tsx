@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { X, Key, ShieldCheck, ExternalLink } from "lucide-react";
+import React, { useState } from "react";
+import { X, Key, ShieldCheck } from "lucide-react";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -11,16 +11,12 @@ interface SettingsModalProps {
 const CUSTOM_API_KEY_STORAGE = "lingocare_custom_gemini_key";
 
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
-  const [apiKey, setApiKey] = useState("");
+  const [apiKey, setApiKey] = useState(() =>
+    typeof window !== "undefined"
+      ? localStorage.getItem(CUSTOM_API_KEY_STORAGE) || ""
+      : ""
+  );
   const [isSaved, setIsSaved] = useState(false);
-
-  useEffect(() => {
-    if (isOpen) {
-      const stored = localStorage.getItem(CUSTOM_API_KEY_STORAGE) || "";
-      setApiKey(stored);
-      setIsSaved(false);
-    }
-  }, [isOpen]);
 
   if (!isOpen) return null;
 

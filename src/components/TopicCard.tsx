@@ -15,7 +15,7 @@ import {
 
 interface TopicCardProps {
   topic: Topic;
-  topicIndex: number;
+  topicIndex?: number;
   moduleId: string;
   onUpdateTopic: (updates: Partial<Pick<Topic, "title" | "description">>) => void;
   onDeleteTopic: () => void;
@@ -30,7 +30,6 @@ interface TopicCardProps {
 
 export function TopicCard({
   topic,
-  topicIndex,
   moduleId,
   onUpdateTopic,
   onDeleteTopic,

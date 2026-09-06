@@ -9,9 +9,7 @@ import {
   AlertCircle,
   CheckCircle2,
   Loader2,
-  Download,
   TestTube2,
-  Info,
 } from "lucide-react";
 import { Curriculum } from "@/types/curriculum";
 import { getCustomApiKey } from "./SettingsModal";
@@ -87,8 +85,9 @@ export function PdfUploadModal({
       const file = new File([blob], filename, { type: "application/pdf" });
       setSelectedFile(file);
       setErrorMessage(null);
-    } catch (e: any) {
-      setErrorMessage("Could not fetch test sample: " + e.message);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      setErrorMessage("Could not fetch test sample: " + message);
     }
   };
 
@@ -346,7 +345,7 @@ export function PdfUploadModal({
               <p className="text-xs text-neutral-500">
                 {status === "extracting" && "Reading PDF pages and preparing tokens for the AI engine"}
                 {status === "structuring" && "Detecting hierarchy levels and inferring missing topics"}
-                {status === "done" && "Injecting directly into your editable workspace..."}
+                {status === "done" && (diagnosticWarning || "Injecting directly into your editable workspace...")}
               </p>
             </div>
 
@@ -400,7 +399,7 @@ export function PdfUploadModal({
               <ul className="list-disc pl-4 space-y-0.5">
                 <li>Make sure the PDF contains selectable text (not scanned images without OCR).</li>
                 <li>Check your Gemini API quota or enter your own key in Settings.</li>
-                <li>You can also click "Load Sample" to instantly test with real German nursing data.</li>
+                <li>You can also click &quot;Load Sample&quot; to instantly test with real German nursing data.</li>
               </ul>
             </div>
 

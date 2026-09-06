@@ -30,12 +30,15 @@ export function InlineEditable({
   const inputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Sync external value updates when not editing
-  useEffect(() => {
-    if (!isEditing) {
-      setDraftValue(value);
-    }
-  }, [value, isEditing]);
+  const adjustTextareaHeight = (el: HTMLTextAreaElement) => {
+    el.style.height = "auto";
+    el.style.height = `${Math.max(el.scrollHeight, 40)}px`;
+  };
+
+  const startEditing = () => {
+    setDraftValue(value);
+    setIsEditing(true);
+  };
 
   // Focus and auto-resize when entering edit mode
   useEffect(() => {
@@ -58,11 +61,6 @@ export function InlineEditable({
       }
     }
   }, [isEditing, multiline, autoSelectOnFocus]);
-
-  const adjustTextareaHeight = (el: HTMLTextAreaElement) => {
-    el.style.height = "auto";
-    el.style.height = `${Math.max(el.scrollHeight, 40)}px`;
-  };
 
   const handleCommit = () => {
     setIsEditing(false);
@@ -140,13 +138,13 @@ export function InlineEditable({
 
   return (
     <div
-      onClick={() => setIsEditing(true)}
+      onClick={startEditing}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
-          setIsEditing(true);
+          startEditing();
         }
       }}
       className={`group cursor-pointer rounded transition-colors duration-150 py-0.5 px-1 -mx-1 hover:bg-neutral-100/80 dark:hover:bg-neutral-800/60 ${

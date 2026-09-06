@@ -3,6 +3,26 @@ import { GoogleGenAI } from "@google/genai";
 import { extractText } from "unpdf";
 import { Curriculum, Module, Topic, Lesson } from "@/types/curriculum";
 
+interface RawAiLesson {
+  title?: string;
+  description?: string;
+  isInferred?: boolean;
+}
+
+interface RawAiTopic {
+  title?: string;
+  description?: string;
+  isInferred?: boolean;
+  lessons?: RawAiLesson[];
+}
+
+interface RawAiModule {
+  title?: string;
+  description?: string;
+  isInferred?: boolean;
+  topics?: RawAiTopic[];
+}
+
 // Fallback inference dictionary for German nursing competencies
 const NURSING_INFERENCE_KNOWLEDGE: Record<
   string,
@@ -226,18 +246,18 @@ OUTPUT JSON FORMAT ONLY:
         if (parsedData && Array.isArray(parsedData.modules)) {
           // Normalize IDs and ensure structure
           let moduleCounter = 1;
-          const sanitizedModules: Module[] = parsedData.modules.map(
-            (m: any, mIdx: number) => {
+          const sanitizedModules: Module[] = (parsedData.modules as RawAiModule[]).map(
+            (m: RawAiModule, mIdx: number) => {
               const moduleId = `mod-ai-${Date.now()}-${moduleCounter++}`;
               let topicCounter = 1;
 
               const sanitizedTopics: Topic[] = (m.topics || []).map(
-                (t: any, tIdx: number) => {
+                (t: RawAiTopic, tIdx: number) => {
                   const topicId = `top-ai-${Date.now()}-${mIdx + 1}-${topicCounter++}`;
                   let lessonCounter = 1;
 
                   const sanitizedLessons: Lesson[] = (t.lessons || []).map(
-                    (l: any) => ({
+                    (l: RawAiLesson) => ({
                       id: `les-ai-${Date.now()}-${mIdx + 1}-${tIdx + 1}-${lessonCounter++}`,
                       title: l.title || `Lesson ${lessonCounter}`,
                       description: l.description || "",
@@ -283,8 +303,9 @@ OUTPUT JSON FORMAT ONLY:
             warning: parsedData.unstructuredWarning,
           });
         }
-      } catch (geminiError: any) {
-        console.warn("Gemini API call failed, falling back to local structural parser:", geminiError?.message || geminiError);
+      } catch (geminiError: unknown) {
+        const msg = geminiError instanceof Error ? geminiError.message : String(geminiError);
+        console.warn("Gemini API call failed, falling back to local structural parser:", msg);
         // Fall through to local structural parser
       }
     }
@@ -294,7 +315,7 @@ OUTPUT JSON FORMAT ONLY:
     try {
       const { text } = await extractText(new Uint8Array(buffer));
       extractedText = Array.isArray(text) ? text.join("\n") : (text || "");
-    } catch (parseErr: any) {
+    } catch (parseErr: unknown) {
       console.warn("unpdf extraction error:", parseErr);
     }
 
@@ -316,7 +337,7 @@ OUTPUT JSON FORMAT ONLY:
       .filter((l) => l.length > 0 && !l.startsWith("--") && !l.includes("LINGOCARE ACADEMY"));
 
     let curriculumTitle = "Generalistische Pflegeausbildung";
-    let curriculumDesc = "Ausbildungsplan für Pflegeberufe extrahiert aus " + file.name;
+    const curriculumDesc = "Ausbildungsplan für Pflegeberufe extrahiert aus " + file.name;
     const modules: Module[] = [];
 
     let currentModule: Module | null = null;
@@ -511,12 +532,13 @@ OUTPUT JSON FORMAT ONLY:
       curriculum: generatedCurriculum,
       warning,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : "An unexpected server error occurred during document parsing.";
     console.error("Critical API error in /api/parse-curriculum:", error);
     return NextResponse.json(
       {
         success: false,
-        error: error?.message || "An unexpected server error occurred during document parsing.",
+        error: errorMsg,
       },
       { status: 500 }
     );

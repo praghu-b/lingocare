@@ -10,10 +10,8 @@ import { Curriculum } from "@/types/curriculum";
 import {
   Plus,
   Sparkles,
-  RotateCcw,
   BookOpenCheck,
   CheckCircle2,
-  AlertCircle,
   Undo2,
   X,
 } from "lucide-react";
@@ -21,7 +19,6 @@ import {
 export function CurriculumEditor() {
   const {
     curriculum,
-    isLoaded,
     stats,
     lastDeleted,
     updateCurriculumTitle,
@@ -76,21 +73,6 @@ export function CurriculumEditor() {
       setNotificationToast(null);
     }, 4000);
   };
-
-  if (!isLoaded) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-neutral-50 dark:bg-neutral-950">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#EC8601]/20 text-[#EC8601] flex items-center justify-center font-bold text-lg animate-pulse">
-            L
-          </div>
-          <p className="text-xs text-neutral-500 font-medium">
-            Loading Curriculum Engine...
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-neutral-50/60 dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 antialiased selection:bg-[#EC8601]/20 selection:text-[#EC8601]">

@@ -5,7 +5,6 @@ import { Curriculum, CurriculumStats } from "@/types/curriculum";
 import { InlineEditable } from "./InlineEditable";
 import {
   Sparkles,
-  Upload,
   Download,
   RotateCcw,
   ChevronsDown,

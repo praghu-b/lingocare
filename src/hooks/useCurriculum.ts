@@ -16,39 +16,32 @@ interface DeletedSnapshot {
 
 export function useCurriculum() {
   const [curriculum, setCurriculumState] = useState<Curriculum>(() => {
-    // Return sample curriculum as default initial state; will sync with localStorage on mount
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored) as Curriculum;
+          if (parsed && Array.isArray(parsed.modules)) {
+            return parsed;
+          }
+        }
+      } catch (e) {
+        console.warn("Failed to load curriculum from localStorage:", e);
+      }
+    }
     return SAMPLE_NURSING_CURRICULUM;
   });
 
-  const [isLoaded, setIsLoaded] = useState(false);
   const [lastDeleted, setLastDeleted] = useState<DeletedSnapshot | null>(null);
 
-  // Sync from localStorage on initial client mount
+  // Save to localStorage on state changes
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored) as Curriculum;
-        if (parsed && Array.isArray(parsed.modules)) {
-          setCurriculumState(parsed);
-        }
-      }
-    } catch (e) {
-      console.warn("Failed to load curriculum from localStorage:", e);
-    } finally {
-      setIsLoaded(true);
-    }
-  }, []);
-
-  // Save to localStorage on state changes once loaded
-  useEffect(() => {
-    if (!isLoaded) return;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(curriculum));
     } catch (e) {
       console.warn("Failed to persist curriculum to localStorage:", e);
     }
-  }, [curriculum, isLoaded]);
+  }, [curriculum]);
 
   // Compute live statistics
   const stats: CurriculumStats = useMemo(() => {
@@ -443,7 +436,6 @@ export function useCurriculum() {
 
   return {
     curriculum,
-    isLoaded,
     stats,
     lastDeleted,
     // Actions
