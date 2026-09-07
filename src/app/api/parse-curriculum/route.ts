@@ -221,8 +221,10 @@ OUTPUT JSON FORMAT ONLY:
 
         const candidateModels = [
           process.env.GEMINI_MODEL,
+          "gemini-flash-lite-latest",
+          "gemini-3.5-flash-lite",
+          "gemini-3.8-flash",
           "gemini-3.7-flash",
-          "gemini-flash-latest",
         ].filter(Boolean) as string[];
 
         let responseText = "";
@@ -264,67 +266,67 @@ OUTPUT JSON FORMAT ONLY:
           const parsedData = JSON.parse(responseText);
 
           if (parsedData && Array.isArray(parsedData.modules)) {
-          // Normalize IDs and ensure structure
-          let moduleCounter = 1;
-          const sanitizedModules: Module[] = (parsedData.modules as RawAiModule[]).map(
-            (m: RawAiModule, mIdx: number) => {
-              const moduleId = `mod-ai-${Date.now()}-${moduleCounter++}`;
-              let topicCounter = 1;
+            // Normalize IDs and ensure structure
+            let moduleCounter = 1;
+            const sanitizedModules: Module[] = (parsedData.modules as RawAiModule[]).map(
+              (m: RawAiModule, mIdx: number) => {
+                const moduleId = `mod-ai-${Date.now()}-${moduleCounter++}`;
+                let topicCounter = 1;
 
-              const sanitizedTopics: Topic[] = (m.topics || []).map(
-                (t: RawAiTopic, tIdx: number) => {
-                  const topicId = `top-ai-${Date.now()}-${mIdx + 1}-${topicCounter++}`;
-                  let lessonCounter = 1;
+                const sanitizedTopics: Topic[] = (m.topics || []).map(
+                  (t: RawAiTopic, tIdx: number) => {
+                    const topicId = `top-ai-${Date.now()}-${mIdx + 1}-${topicCounter++}`;
+                    let lessonCounter = 1;
 
-                  const sanitizedLessons: Lesson[] = (t.lessons || []).map(
-                    (l: RawAiLesson) => ({
-                      id: `les-ai-${Date.now()}-${mIdx + 1}-${tIdx + 1}-${lessonCounter++}`,
-                      title: l.title || `Lesson ${lessonCounter}`,
-                      description: l.description || "",
-                      isInferred: Boolean(l.isInferred),
-                    })
-                  );
+                    const sanitizedLessons: Lesson[] = (t.lessons || []).map(
+                      (l: RawAiLesson) => ({
+                        id: `les-ai-${Date.now()}-${mIdx + 1}-${tIdx + 1}-${lessonCounter++}`,
+                        title: l.title || `Lesson ${lessonCounter}`,
+                        description: l.description || "",
+                        isInferred: Boolean(l.isInferred),
+                      })
+                    );
 
-                  return {
-                    id: topicId,
-                    title: t.title || `Topic ${tIdx + 1}`,
-                    description: t.description || "",
-                    lessons: sanitizedLessons,
-                    isCollapsed: false,
-                    isInferred: Boolean(t.isInferred),
-                  };
-                }
-              );
+                    return {
+                      id: topicId,
+                      title: t.title || `Topic ${tIdx + 1}`,
+                      description: t.description || "",
+                      lessons: sanitizedLessons,
+                      isCollapsed: false,
+                      isInferred: Boolean(t.isInferred),
+                    };
+                  }
+                );
 
-              return {
-                id: moduleId,
-                title: m.title || `MODULE ${mIdx + 1}`,
-                description: m.description || "",
-                topics: sanitizedTopics,
-                isCollapsed: false,
-                isInferred: Boolean(m.isInferred),
-              };
-            }
-          );
+                return {
+                  id: moduleId,
+                  title: m.title || `MODULE ${mIdx + 1}`,
+                  description: m.description || "",
+                  topics: sanitizedTopics,
+                  isCollapsed: false,
+                  isInferred: Boolean(m.isInferred),
+                };
+              }
+            );
 
-          const curriculum: Curriculum = {
-            id: `curr-ai-${Date.now()}`,
-            title: parsedData.title || file.name.replace(/\.pdf$/i, ""),
-            description: parsedData.description || "",
-            modules: sanitizedModules,
-            source: "ai-generated",
-            fileName: file.name,
-            lastModified: Date.now(),
-          };
+            const curriculum: Curriculum = {
+              id: `curr-ai-${Date.now()}`,
+              title: parsedData.title || file.name.replace(/\.pdf$/i, ""),
+              description: parsedData.description || "",
+              modules: sanitizedModules,
+              source: "ai-generated",
+              fileName: file.name,
+              lastModified: Date.now(),
+            };
 
-          return NextResponse.json({
-            success: true,
-            curriculum,
-            warning: parsedData.unstructuredWarning,
-          });
+            return NextResponse.json({
+              success: true,
+              curriculum,
+              warning: parsedData.unstructuredWarning,
+            });
+          }
         }
-      }
-    } catch (geminiError: unknown) {
+      } catch (geminiError: unknown) {
         const msg = geminiError instanceof Error ? geminiError.message : String(geminiError);
         console.warn("Gemini API call failed, falling back to local structural parser:", msg);
         // Fall through to local structural parser
@@ -448,7 +450,7 @@ OUTPUT JSON FORMAT ONLY:
     if (modules.length === 0) {
       // Document had text, but no recognizable modules
       warning = "Notice: The document did not contain a standard module hierarchy. The structural engine created a draft syllabus based on clinical nursing competencies.";
-      
+
       // Create a default 2-module structure
       modules.push({
         id: `mod-fallback-1`,
