@@ -222,8 +222,7 @@ OUTPUT JSON FORMAT ONLY:
         const candidateModels = [
           process.env.GEMINI_MODEL,
           "gemini-3.7-flash",
-          "gemini-2.0-flash",
-          "gemini-1.5-flash",
+          "gemini-flash-latest",
         ].filter(Boolean) as string[];
 
         let responseText = "";
@@ -260,9 +259,11 @@ OUTPUT JSON FORMAT ONLY:
             console.warn(`Model ${modelId} attempt note:`, msg.slice(0, 100));
           }
         }
-        const parsedData = JSON.parse(responseText);
 
-        if (parsedData && Array.isArray(parsedData.modules)) {
+        if (responseText) {
+          const parsedData = JSON.parse(responseText);
+
+          if (parsedData && Array.isArray(parsedData.modules)) {
           // Normalize IDs and ensure structure
           let moduleCounter = 1;
           const sanitizedModules: Module[] = (parsedData.modules as RawAiModule[]).map(
@@ -322,7 +323,8 @@ OUTPUT JSON FORMAT ONLY:
             warning: parsedData.unstructuredWarning,
           });
         }
-      } catch (geminiError: unknown) {
+      }
+    } catch (geminiError: unknown) {
         const msg = geminiError instanceof Error ? geminiError.message : String(geminiError);
         console.warn("Gemini API call failed, falling back to local structural parser:", msg);
         // Fall through to local structural parser
